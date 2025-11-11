@@ -1,0 +1,11 @@
+.vs/
+*.ipch
+*.VC.db
+*.user
+*.obj
+*.pdb
+*.tlog
+bin/
+build/
+Debug/
+Release/
