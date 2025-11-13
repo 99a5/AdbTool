@@ -40,31 +40,40 @@ public:
 
 
 protected:
-    void dragEnterEvent(QDragEnterEvent* event) override;
-    void dropEvent(QDropEvent* event) override;
+   // void dragEnterEvent(QDragEnterEvent* event) override;
+   // void dropEvent(QDropEvent* event) override;
 
 private slots:
+
+    //检测adb
+    void onExecute();
     void onDetectAdb();
-    void onListDevices();
-    void onInstallApk();
-    void onPushFile();
-    void onPullFile();
-    void onStartApp();
-    void onExportLog();
-    void onStartCpuMonitor();
-    void onStopCpuMonitor();
+   /// void onListDevices();
+   // void onInstallApk();
+   // void onPushFile();
+   // void onPullFile();
+   // void onStartApp();
+   // void onExportLog();
+   // void onStartCpuMonitor();
+    //void onStopCpuMonitor();
 
     // adb callbacks
-    void readAdbOutput();
-    void adbFinished(int exitCode, QProcess::ExitStatus status);
+   // void readAdbOutput();
+   // void adbFinished(int exitCode, QProcess::ExitStatus status);
 
     // cpu monitor
-    void cpuPoll();
+   // void cpuPoll();
 
 private:
-    void appendLog(const QString& s);
-    QString adbCommand(const QStringList& args);
 
+    //输出日志
+    void appendLog(const QString& s);
+    //QString adbCommand(const QStringList& args);
+
+    void refreshDeviceList();
+    void updateSelectedDevices();
+    QStringList getAdbDeviceList();
+    QString getDeviceModel(const QString& deviceId);
     // UI elements
     QWidget* central;
     QVBoxLayout* lay;
@@ -86,6 +95,9 @@ private:
     QPushButton* btnBrowseApk;
     QPushButton* btnStartMon;
     QPushButton* btnStopMon;
+    QPushButton* btnBatchRefresh;
+    QPushButton* btnBatchInstall;
+    QPushButton* btnBatchStartApp;
 
     QTextEdit* logView;
     QProgressBar* progressBar;
@@ -93,6 +105,9 @@ private:
     QLineEdit* leApkPath;
     QLineEdit* lePackageName;
     QComboBox* cbMonitorProcess;
+
+    QListWidget* lwBatchDevices;
+    QTableWidget* deviceTable;
 
     // chart
     QtCharts::QChartView* chartView;
@@ -108,4 +123,7 @@ private:
     QString lastHistoryFile = "adb_history.txt";
 private:
     Ui::AdbToolClass ui;
+
+    // 用于存储选中的设备ID列表
+    QStringList selectedDevices;
 };

@@ -1,4 +1,4 @@
-#include "AdbTool.h"
+ï»¿#include "AdbTool.h"
 #include <QtWidgets>
 #include <QtCharts>
 //#include <QZipWriter>
@@ -15,60 +15,56 @@ AdbTool::AdbTool(QWidget *parent)
     initUI();
     connectSlots();
 
-    // try auto-detect on start
-    onDetectAdb();
-
-    // load history (very simple)
-    if (QFile::exists(lastHistoryFile)) {
+    //onDetectAdb();
+   /* if (QFile::exists(lastHistoryFile)) {
         QFile hf(lastHistoryFile);
         if (hf.open(QIODevice::ReadOnly | QIODevice::Text)) {
             QStringList lines = QString(hf.readAll()).split('\n', Qt::SkipEmptyParts);
             for (auto& l : lines) appendLog("[HIST] " + l);
         }
-    }
+    }*/
 }
 
 AdbTool::~AdbTool()
 {
     cpuTimer->stop();
     if (adbProcess->state() == QProcess::Running) adbProcess->kill();
-
 }
 
 void AdbTool::initData()
 {
     central = new QWidget(this);
     lay = new QVBoxLayout(central);
-
     topRow = new QHBoxLayout();
-    leAdbPath = new QLineEdit("adb", this);
+    leAdbPath = new QLineEdit(this);
+    btnDetect = new QPushButton(QStringLiteral("æ£€æµ‹ ADB"), this);
+    btnBatchRefresh = new QPushButton(QStringLiteral("è¿æ¥è®¾å¤‡"));
+    btnBatchRefresh = new QPushButton(QStringLiteral("åˆ·æ–°è®¾å¤‡åˆ—è¡¨"));
 
-    btnDetect = new QPushButton(QStringLiteral("¼ì²â ADB"), this);
-    btnListDevices = new QPushButton(QStringLiteral("ÁĞ³öÉè±¸"), this);
-    cbDevices = new QComboBox(this);
+    logView = new QTextEdit(this);
+    logView->setReadOnly(true);
+   // apkRow = new QHBoxLayout();
+   // leApkPath = new QLineEdit(this);
 
-    apkRow = new QHBoxLayout();
-    leApkPath = new QLineEdit(this);
-
-    leApkPath->setPlaceholderText(QStringLiteral("ÍÏÈë APK »òµã»÷Ñ¡Ôñ..."));
-    btnBrowseApk = new QPushButton(QStringLiteral("Ñ¡Ôñ APK"));
-    btnInstall = new QPushButton(QStringLiteral("°²×° APK"));
+   /* leApkPath->setPlaceholderText(QStringLiteral("æ‹–å…¥ APK æˆ–ç‚¹å‡»é€‰æ‹©..."));
+    btnBrowseApk = new QPushButton(QStringLiteral("é€‰æ‹© APK"));
+    btnInstall = new QPushButton(QStringLiteral("å®‰è£… APK"));
     lePackageName = new QLineEdit(this);
 
-    btnStartApp = new QPushButton(QStringLiteral("Æô¶¯ App"));
+    btnStartApp = new QPushButton(QStringLiteral("å¯åŠ¨ App"));
 
     ppRow = new QHBoxLayout();
-    btnPush = new QPushButton(QStringLiteral("ÍÆËÍ ÎÄ¼ş (Push)"));
-    btnPull = new QPushButton(QStringLiteral("À­È¡ ÎÄ¼ş (Pull)"));
+    btnPush = new QPushButton(QStringLiteral("æ¨é€ æ–‡ä»¶ (Push)"));
+    btnPull = new QPushButton(QStringLiteral("æ‹‰å– æ–‡ä»¶ (Pull)"));
 
     logRow = new QHBoxLayout();
-    btnExportLog = new QPushButton(QStringLiteral("µ¼³ö logcat ²¢Ñ¹Ëõ"));
+    btnExportLog = new QPushButton(QStringLiteral("å¯¼å‡º logcat å¹¶å‹ç¼©"));
 
     monRow = new QHBoxLayout();
     cbMonitorProcess = new QComboBox(this);
 
-    btnStartMon = new QPushButton(QStringLiteral("¿ªÊ¼ CPU ¼à¿Ø"));
-    btnStopMon = new QPushButton(QStringLiteral("Í£Ö¹ CPU ¼à¿Ø"));
+    btnStartMon = new QPushButton(QStringLiteral("å¼€å§‹ CPU ç›‘æ§"));
+    btnStopMon = new QPushButton(QStringLiteral("åœæ­¢ CPU ç›‘æ§"));
 
     cpuSeries = new QLineSeries();
     chart = new QChart();
@@ -76,154 +72,318 @@ void AdbTool::initData()
     axisX = new QValueAxis;
     axisY = new QValueAxis;
 
-    logView = new QTextEdit(this);
-    logView->setReadOnly(true);
 
-    progressBar = new QProgressBar(this);
+    progressBar = new QProgressBar(this);*/
 }
 
 void AdbTool::initUI()
 {
+    leAdbPath->setToolTip(QStringLiteral("ADB å¯æ‰§è¡Œæ–‡ä»¶è·¯å¾„ï¼Œé»˜è®¤ä½¿ç”¨ç³»ç»Ÿ PATH ä¸­çš„ adb"));
 
-    leAdbPath->setToolTip(QStringLiteral("ADB ¿ÉÖ´ĞĞÎÄ¼şÂ·¾¶£¬Ä¬ÈÏÊ¹ÓÃÏµÍ³ PATH ÖĞµÄ adb"));
+    // ========= ADB è®¾ç½®åŒºåŸŸ =========
+    QGroupBox* adbGroup = new QGroupBox(QStringLiteral("ADB è®¾ç½®"), this);
+    QVBoxLayout* adbLay = new QVBoxLayout(adbGroup);
 
-    // ========= ADB ÉèÖÃÇøÓò =========
-    QGroupBox* adbGroup = new QGroupBox(QStringLiteral("ADB ÉèÖÃ"), this);
-    QGridLayout* adbLay = new QGridLayout(adbGroup);
+    // ADB è·¯å¾„è¡Œ
+    QHBoxLayout* adbPathLay = new QHBoxLayout();
+    adbPathLay->addWidget(new QLabel(QStringLiteral("ADB Path:")));
+    adbPathLay->addWidget(leAdbPath);
+    adbPathLay->addWidget(btnDetect);
+    adbLay->addLayout(adbPathLay);
 
-    adbLay->addWidget(new QLabel(QStringLiteral("ADB Path:")), 0, 0);
-    adbLay->addWidget(leAdbPath, 0, 1);
-    adbLay->addWidget(btnDetect, 0, 2);
+    // æŒ‰é’®è¡Œ
+    QHBoxLayout* adbBtnLay = new QHBoxLayout();
+    adbBtnLay->addWidget(btnBatchRefresh);
+    adbBtnLay->addWidget(btnBatchInstall);
+    adbBtnLay->addWidget(btnBatchStartApp);
+    adbLay->addLayout(adbBtnLay);
 
-    adbLay->addWidget(new QLabel(QStringLiteral("Éè±¸:")), 1, 0);
-    adbLay->addWidget(cbDevices, 1, 1);
-    adbLay->addWidget(btnListDevices, 1, 2);
+    // ========== å¤šé€‰è®¾å¤‡è¡¨æ ¼ ==========
+    deviceTable = new QTableWidget(this);
+    deviceTable->setColumnCount(3);
+    QStringList headers = { QStringLiteral("é€‰æ‹©"), QStringLiteral("å‹å·"), QStringLiteral("PID") };
+    deviceTable->setHorizontalHeaderLabels(headers);
+
+    //  è¡¨å¤´æ ·å¼ç¾åŒ–
+    QHeaderView* header = deviceTable->horizontalHeader();
+    header->setSectionResizeMode(QHeaderView::Stretch);
+ 
+    // è¡¨æ ¼åŸºç¡€å¤–è§‚ä¼˜åŒ–
+    deviceTable->setStyleSheet(R"(
+    QTableWidget {
+        background-color: #fafafa;
+        alternate-background-color: #f0f0f0;
+        border: 1px solid #d0d0d0;
+        border-radius: 6px;
+        gridline-color: #e0e0e0;
+        font-size: 14px;
+        selection-background-color: #d7ebff;
+    }
+
+    QTableWidget::item:hover {
+        background-color: #f2f9ff;
+    }
+
+    QTableWidget::item:selected {
+        background-color: #d7ebff;
+    }
+
+    QScrollBar:vertical {
+        width: 10px;
+        background: transparent;
+        margin: 0px;
+    }
+
+    QScrollBar::handle:vertical {
+        background: #c0c0c0;
+        border-radius: 4px;
+        min-height: 20px;
+    }
+
+    QScrollBar::handle:vertical:hover {
+        background: #a0a0a0;
+    }
+)");
+
+    //å…¶ä»–è¡Œä¸ºè®¾ç½®
+    deviceTable->verticalHeader()->setVisible(false);
+    deviceTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    deviceTable->setSelectionMode(QAbstractItemView::NoSelection);
+    deviceTable->setAlternatingRowColors(true);
+    deviceTable->setFocusPolicy(Qt::NoFocus);
+    deviceTable->setShowGrid(true);
+    deviceTable->setContentsMargins(8, 8, 8, 8);
+    deviceTable->setStyleSheet(deviceTable->styleSheet() + "QTableWidget { padding: 8px; }");
+
+    adbLay->addWidget(deviceTable);
 
 
-    // ========= APK °²×°ÇøÓò =========
-    QGroupBox* apkGroup = new QGroupBox(QStringLiteral("APK °²×°ÓëÆô¶¯"), this);
-    QGridLayout* apkLay = new QGridLayout(apkGroup);
+    //// ========= APK å®‰è£…åŒºåŸŸ =========
+    //QGroupBox* apkGroup = new QGroupBox(QStringLiteral("APK å®‰è£…ä¸å¯åŠ¨"), this);
+    //QGridLayout* apkLay = new QGridLayout(apkGroup);
 
-    apkLay->addWidget(new QLabel(QStringLiteral("APK ÎÄ¼ş:")), 0, 0);
-    apkLay->addWidget(leApkPath, 0, 1);
-    apkLay->addWidget(btnBrowseApk, 0, 2);
-    apkLay->addWidget(btnInstall, 0, 3);
+    //apkLay->addWidget(new QLabel(QStringLiteral("APK æ–‡ä»¶:")), 0, 0);
+    //apkLay->addWidget(leApkPath, 0, 1);
+    //apkLay->addWidget(btnBrowseApk, 0, 2);
+    //apkLay->addWidget(btnInstall, 0, 3);
 
-    apkLay->addWidget(new QLabel(QStringLiteral("Package/Main:")), 1, 0);
-    apkLay->addWidget(lePackageName, 1, 1, 1, 2);
-    apkLay->addWidget(btnStartApp, 1, 3);
+    //apkLay->addWidget(new QLabel(QStringLiteral("Package/Main:")), 1, 0);
+    //apkLay->addWidget(lePackageName, 1, 1, 1, 2);
+    //apkLay->addWidget(btnStartApp, 1, 3);
 
-    // ========= Push / Pull Çø =========
-    QGroupBox* fileGroup = new QGroupBox(QStringLiteral("ÎÄ¼ş½»»¥ Push / Pull"), this);
-    QHBoxLayout* fileLay = new QHBoxLayout(fileGroup);
-    fileLay->addWidget(btnPush);
-    fileLay->addWidget(btnPull);
+    //// ========= Push / Pull åŒº =========
+    //QGroupBox* fileGroup = new QGroupBox(QStringLiteral("æ–‡ä»¶äº¤äº’ Push / Pull"), this);
+    //QHBoxLayout* fileLay = new QHBoxLayout(fileGroup);
+    //fileLay->addWidget(btnPush);
+    //fileLay->addWidget(btnPull);
 
-    // ========= ÈÕÖ¾µ¼³ö =========
-    QGroupBox* logGroup = new QGroupBox(QStringLiteral("ÈÕÖ¾µ¼³ö"), this);
-    QHBoxLayout* logLay = new QHBoxLayout(logGroup);
-    logLay->addWidget(btnExportLog);
+    //// ========= æ—¥å¿—å¯¼å‡º =========
+    //QGroupBox* logGroup = new QGroupBox(QStringLiteral("æ—¥å¿—å¯¼å‡º"), this);
+    //QHBoxLayout* logLay = new QHBoxLayout(logGroup);
+    //logLay->addWidget(btnExportLog);
 
-    // ========= CPU ¼à¿ØÇø =========
-    QGroupBox* cpuGroup = new QGroupBox(QStringLiteral("CPU ¼à¿Ø"), this);
-    QVBoxLayout* cpuLay = new QVBoxLayout(cpuGroup);
+    //// ========= CPU ç›‘æ§åŒº =========
+    //QGroupBox* cpuGroup = new QGroupBox(QStringLiteral("CPU ç›‘æ§"), this);
+    //QVBoxLayout* cpuLay = new QVBoxLayout(cpuGroup);
 
-    QHBoxLayout* cpuCtrl = new QHBoxLayout();
-    cpuCtrl->addWidget(new QLabel(QStringLiteral("½ø³Ì:")));
-    cbMonitorProcess->setEditable(true);
-    cbMonitorProcess->setPlaceholderText("ÊäÈë½ø³ÌÃû»ò pid");
-    cpuCtrl->addWidget(cbMonitorProcess);
-    cpuCtrl->addWidget(btnStartMon);
-    cpuCtrl->addWidget(btnStopMon);
+    //QHBoxLayout* cpuCtrl = new QHBoxLayout();
+    //cpuCtrl->addWidget(new QLabel(QStringLiteral("è¿›ç¨‹:")));
+    //cbMonitorProcess->setEditable(true);
+    //cbMonitorProcess->setPlaceholderText("è¾“å…¥è¿›ç¨‹åæˆ– pid");
+    //cpuCtrl->addWidget(cbMonitorProcess);
+    //cpuCtrl->addWidget(btnStartMon);
+    //cpuCtrl->addWidget(btnStopMon);
 
-    cpuLay->addLayout(cpuCtrl);
+    //cpuLay->addLayout(cpuCtrl);
 
-    // ½«Í¼±í·Åµ½ ChartView ÖĞ
-    chartView = new QtCharts::QChartView(chart);
-    chartView->setRenderHint(QPainter::Antialiasing);
-    cpuLay->addWidget(chartView);
+    //// å°†å›¾è¡¨æ”¾åˆ° ChartView ä¸­
+    //chartView = new QtCharts::QChartView(chart);
+    //chartView->setRenderHint(QPainter::Antialiasing);
+    //cpuLay->addWidget(chartView);
 
-    // ========= ÈÕÖ¾ÎÄ±¾Êä³ö =========
-    QGroupBox* outGroup = new QGroupBox(QStringLiteral("Êä³öÈÕÖ¾"));
+    // ========= æ—¥å¿—æ–‡æœ¬è¾“å‡º =========
+    QGroupBox* outGroup = new QGroupBox(QStringLiteral("è¾“å‡ºæ—¥å¿—"));
     QVBoxLayout* outLay = new QVBoxLayout(outGroup);
     outLay->addWidget(logView);
     outLay->addWidget(progressBar);
 
-    // ½«ËùÓĞ·Ö×é¼ÓÈëÖ÷²¼¾Ö
+    // å°†æ‰€æœ‰åˆ†ç»„åŠ å…¥ä¸»å¸ƒå±€
     lay->addWidget(adbGroup);
-    lay->addWidget(apkGroup);
-    lay->addWidget(fileGroup);
-    lay->addWidget(logGroup);
-    lay->addWidget(cpuGroup);
+    //lay->addWidget(apkGroup);
+    //lay->addWidget(fileGroup);
+    //lay->addWidget(logGroup);
+    //lay->addWidget(cpuGroup);
     lay->addWidget(outGroup);
 
     setCentralWidget(central);
-    resize(800, 600);
-    setWindowTitle(QStringLiteral("ADB ÖÇÄÜÖúÊÖ - Demo"));
+    resize(600, 800);
+    setWindowTitle(QStringLiteral("ADB æ™ºèƒ½åŠ©æ‰‹ - Demo"));
 }
 
 void AdbTool::connectSlots()
 {
+    connect(btnBatchRefresh, &QPushButton::clicked, this, &AdbTool::refreshDeviceList);
+
+
     connect(btnDetect, &QPushButton::clicked, this, &AdbTool::onDetectAdb);
-    connect(btnListDevices, &QPushButton::clicked, this, &AdbTool::onListDevices);
-    connect(btnBrowseApk, &QPushButton::clicked, [this]() {
-        QString f = QFileDialog::getOpenFileName(this, QStringLiteral("Ñ¡Ôñ APK"), QString(), "APK Files (*.apk)");
-        if (!f.isEmpty()) leApkPath->setText(f);
-        });
-    connect(btnInstall, &QPushButton::clicked, this, &AdbTool::onInstallApk);
-    connect(btnPush, &QPushButton::clicked, this, &AdbTool::onPushFile);
-    connect(btnPull, &QPushButton::clicked, this, &AdbTool::onPullFile);
-    connect(btnStartApp, &QPushButton::clicked, this, &AdbTool::onStartApp);
-    connect(btnExportLog, &QPushButton::clicked, this, &AdbTool::onExportLog);
+    //connect(btnBrowseApk, &QPushButton::clicked, [this]() {
+    //    QString f = QFileDialog::getOpenFileName(this, QStringLiteral("é€‰æ‹© APK"), QString(), "APK Files (*.apk)");
+    //    if (!f.isEmpty()) leApkPath->setText(f);
+    //    });
+    //connect(btnInstall, &QPushButton::clicked, this, &AdbTool::onInstallApk);
+    //connect(btnPush, &QPushButton::clicked, this, &AdbTool::onPushFile);
+    //connect(btnPull, &QPushButton::clicked, this, &AdbTool::onPullFile);
+    //connect(btnStartApp, &QPushButton::clicked, this, &AdbTool::onStartApp);
+    //connect(btnExportLog, &QPushButton::clicked, this, &AdbTool::onExportLog);
 
-    connect(btnStartMon, &QPushButton::clicked, this, &AdbTool::onStartCpuMonitor);
-    connect(btnStopMon, &QPushButton::clicked, this, &AdbTool::onStopCpuMonitor);
+    //connect(btnStartMon, &QPushButton::clicked, this, &AdbTool::onStartCpuMonitor);
+    //connect(btnStopMon, &QPushButton::clicked, this, &AdbTool::onStopCpuMonitor);
 
-    connect(adbProcess, &QProcess::readyReadStandardOutput, this, &AdbTool::readAdbOutput);
-    connect(adbProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
-        this, &AdbTool::adbFinished);
+    //connect(adbProcess, &QProcess::readyReadStandardOutput, this, &AdbTool::readAdbOutput);
+    //connect(adbProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+    //    this, &AdbTool::adbFinished);
 
-    connect(cpuTimer, &QTimer::timeout, this, &AdbTool::cpuPoll);
+    //connect(cpuTimer, &QTimer::timeout, this, &AdbTool::cpuPoll);
 }
 
-
-
-// --- drag/drop
-void AdbTool::dragEnterEvent(QDragEnterEvent* event)
+void AdbTool::refreshDeviceList()
 {
-    if (event->mimeData()->hasUrls()) event->acceptProposedAction();
+    deviceTable->setRowCount(0);
+
+    QStringList devices = getAdbDeviceList(); // ä½ å·²æœ‰çš„ ADB åˆ—è¡¨æ–¹æ³•
+    for (const QString& dev : devices) {
+        QString model = getDeviceModel(dev); // å¯è°ƒç”¨ adb -s <dev> shell getprop ro.product.model
+        int row = deviceTable->rowCount();
+        deviceTable->insertRow(row);
+
+        // é€‰æ‹©æ¡†
+        QCheckBox* cb = new QCheckBox();
+        QWidget* w = new QWidget();
+        QHBoxLayout* l = new QHBoxLayout(w);
+        l->addWidget(cb);
+        l->setAlignment(Qt::AlignCenter);
+        l->setContentsMargins(0, 0, 0, 0);
+        w->setLayout(l);
+        deviceTable->setCellWidget(row, 0, w);
+
+        // å‹å·
+        deviceTable->setItem(row, 1, new QTableWidgetItem(model));
+
+        // PID
+        deviceTable->setItem(row, 2, new QTableWidgetItem(dev));
+
+        connect(cb, &QCheckBox::stateChanged, this, [=](int) {
+            updateSelectedDevices();
+            });
+    }
 }
-void AdbTool::dropEvent(QDropEvent* event)
+
+void AdbTool::updateSelectedDevices()
 {
-    auto urls = event->mimeData()->urls();
-    if (!urls.isEmpty()) {
-        QString path = urls.first().toLocalFile();
-        if (path.endsWith(".apk", Qt::CaseInsensitive)) {
-            leApkPath->setText(path);
-            appendLog("ÍÏÈë APK: " + path);
-        }
-        else {
-            // store for push
-            cbMonitorProcess->setEditText(path);
-            appendLog("ÍÏÈëÎÄ¼ş: " + path);
+    selectedDevices.clear();
+    int rows = deviceTable->rowCount();
+    for (int i = 0; i < rows; ++i) {
+        QWidget* w = deviceTable->cellWidget(i, 0);
+        if (!w) continue;
+        QCheckBox* cb = w->findChild<QCheckBox*>();
+        if (cb && cb->isChecked()) {
+            QString pid = deviceTable->item(i, 2)->text();
+            selectedDevices.append(pid);
         }
     }
 }
 
-// --- helpers
-QString AdbTool::adbCommand(const QStringList& args)
+void AdbTool::onExecute()
 {
-    //QString aPath = leAdbPath->text().trimmed();
-    //QString cmd = QProcess::programFilePath(); // not used
-    // build full command display (for history)
-    //QString full = aPath + " " + args.join(" ");
-   // QFile hf(lastHistoryFile);
-   // if (hf.open(QIODevice::Append | QIODevice::Text)) {
-   //     hf.write(full.toUtf8() + "\n");
-   // }
-   // return full;
-    return "";
+    if (selectedDevices.isEmpty()) {
+        QMessageBox::warning(this, "æç¤º", "è¯·è‡³å°‘é€‰æ‹©ä¸€ä¸ªè®¾å¤‡ï¼");
+        return;
+    }
+
+    for (const QString& dev : selectedDevices) {
+        // æ‰§è¡Œå•è®¾å¤‡é€»è¾‘
+       // runAdbCommand(dev);
+    }
 }
+
+QStringList AdbTool::getAdbDeviceList()
+{
+    QStringList devices;
+
+    QString adbPath = leAdbPath->text().trimmed();
+    if (adbPath.isEmpty()) {
+        QMessageBox::warning(this, QStringLiteral("é”™è¯¯"), QStringLiteral("è¯·å…ˆè®¾ç½® ADB è·¯å¾„"));
+        return devices;
+    }
+
+    QProcess process;
+    process.setProgram(adbPath);
+    process.setArguments({ "devices" });
+    process.start();
+    process.waitForFinished();
+
+    QString output = QString::fromLocal8Bit(process.readAllStandardOutput());
+
+    QStringList lines = output.split('\n', Qt::SkipEmptyParts);
+    for (const QString& line : lines) {
+        if (line.contains("List of devices")) continue;
+        if (line.contains("offline") || line.contains("unauthorized")) continue;
+
+        QString pid = line.section('\t', 0, 0).trimmed();
+        if (!pid.isEmpty())
+            devices.append(pid);
+    }
+
+    return devices;
+}
+
+QString AdbTool::getDeviceModel(const QString& deviceId)
+{
+    QString adbPath = leAdbPath->text().trimmed();
+    QProcess process;
+    process.start(adbPath, { "-s", deviceId, "shell", "getprop", "ro.product.model" });
+    process.waitForFinished();
+
+    QString model = QString::fromLocal8Bit(process.readAllStandardOutput()).trimmed();
+    return model.isEmpty() ? QStringLiteral("æœªçŸ¥å‹å·") : model;
+}
+
+// --- drag/drop
+//void AdbTool::dragEnterEvent(QDragEnterEvent* event)
+//{
+//    if (event->mimeData()->hasUrls()) event->acceptProposedAction();
+//}
+//void AdbTool::dropEvent(QDropEvent* event)
+//{
+//    auto urls = event->mimeData()->urls();
+//    if (!urls.isEmpty()) {
+//        QString path = urls.first().toLocalFile();
+//        if (path.endsWith(".apk", Qt::CaseInsensitive)) {
+//            leApkPath->setText(path);
+//            appendLog("æ‹–å…¥ APK: " + path);
+//        }
+//        else {
+//            // store for push
+//            cbMonitorProcess->setEditText(path);
+//            appendLog("æ‹–å…¥æ–‡ä»¶: " + path);
+//        }
+//    }
+//}
+
+//// --- helpers
+//QString AdbTool::adbCommand(const QStringList& args)
+//{
+//    //QString aPath = leAdbPath->text().trimmed();
+//    //QString cmd = QProcess::programFilePath(); // not used
+//    // build full command display (for history)
+//    //QString full = aPath + " " + args.join(" ");
+//   // QFile hf(lastHistoryFile);
+//   // if (hf.open(QIODevice::Append | QIODevice::Text)) {
+//   //     hf.write(full.toUtf8() + "\n");
+//   // }
+//   // return full;
+//    return "";
+//}
 
 void AdbTool::appendLog(const QString& s)
 {
@@ -231,271 +391,302 @@ void AdbTool::appendLog(const QString& s)
     logView->append(QString("[%1] %2").arg(t, s));
 }
 
-// --- button slots
 void AdbTool::onDetectAdb()
 {
-    appendLog(QStringLiteral("¼ì²â adb..."));
+    appendLog(QStringLiteral("æ£€æµ‹ adb..."));
     QProcess p;
-    QString program = leAdbPath->text().trimmed();
+    QString program = "adb";
     p.start(program, QStringList() << "version");
     if (!p.waitForStarted(2000)) {
-        appendLog(QStringLiteral("ÎŞ·¨Æô¶¯ adb: ") + program);
+        appendLog(QStringLiteral("æ— æ³•å¯åŠ¨ adb: ") + program);
         return;
     }
     if (!p.waitForFinished(3000)) {
-        appendLog(QStringLiteral("adb ¼ì²â³¬Ê±"));
+        appendLog(QStringLiteral("adb æ£€æµ‹è¶…æ—¶"));
         p.kill();
         return;
     }
     QString out = p.readAllStandardOutput();
-    appendLog("adb version: " + out.trimmed());
-}
+    QString adbPath;
 
-void AdbTool::onListDevices()
-{
-    appendLog(QStringLiteral("ÁĞ³öÉè±¸..."));
-    QString program = leAdbPath->text().trimmed();
-    QProcess p;
-    p.start(program, QStringList() << "devices");
-    if (!p.waitForStarted(2000)) {
-        appendLog(QStringLiteral("ÎŞ·¨Æô¶¯ adb"));
-        return;
-    }
-    if (!p.waitForFinished(5000)) {
-        p.kill();
-        appendLog(QStringLiteral("adb devices ³¬Ê±"));
-        return;
-    }
-    QString out = p.readAllStandardOutput();
-    appendLog(out);
-    cbDevices->clear();
-    // parse devices
-    auto lines = out.split('\n', Qt::SkipEmptyParts);
-    for (auto& ln : lines) {
-        if (ln.contains("\tdevice")) {
-            QString dev = ln.split('\t').first().trimmed();
-            cbDevices->addItem(dev);
-        }
-    }
-    if (cbDevices->count() > 0) {
-        currentDeviceSerial = cbDevices->currentText();
-        appendLog(QStringLiteral("µ±Ç°Éè±¸: " )+ currentDeviceSerial);
-    }
-}
-
-void AdbTool::onInstallApk()
-{
-    QString apk = leApkPath->text().trimmed();
-    if (apk.isEmpty() || !QFile::exists(apk)) {
-        appendLog(QStringLiteral("ÇëÑ¡ÔñÓĞĞ§µÄ APK"));
-        return;
-    }
-    QString program = leAdbPath->text().trimmed();
-    QStringList args;
-    if (!currentDeviceSerial.isEmpty()) {
-        args << "-s" << currentDeviceSerial;
-    }
-    args << "install" << "-r" << apk;
-
-    appendLog(QStringLiteral("Ö´ĞĞ: ") + program + " " + args.join(" "));
-    // run in background and read output
-    adbProcess->start(program, args);
-    progressBar->setRange(0, 0); // indeterminate
-}
-
-void AdbTool::onPushFile()
-{
-    QString src = QFileDialog::getOpenFileName(this, QStringLiteral("Ñ¡Ôñ±¾µØÎÄ¼şÍÆËÍµ½Éè±¸"));
-    if (src.isEmpty()) return;
-    QString dst = QInputDialog::getText(this, QStringLiteral("Ä¿±êÂ·¾¶"), QStringLiteral("Éè±¸Ä¿±êÂ·¾¶ (Èç /sdcard/Download/ »ò /data/local/tmp/):"));
-    if (dst.isEmpty()) return;
-    QString program = leAdbPath->text().trimmed();
-    QStringList args;
-    if (!currentDeviceSerial.isEmpty()) {
-        args << "-s" << currentDeviceSerial;
-    }
-    args << "push" << src << dst;
-    appendLog("Ö´ĞĞ: " + program + " " + args.join(" "));
-    adbProcess->start(program, args);
-    progressBar->setRange(0, 0);
-}
-
-void AdbTool::onPullFile()
-{
-    QString src = QInputDialog::getText(this, QStringLiteral("Éè±¸ÎÄ¼şÂ·¾¶"), QStringLiteral("Éè±¸ÎÄ¼şÂ·¾¶ (Èç /sdcard/Download/log.txt):"));
-    if (src.isEmpty()) return;
-    QString dst = QFileDialog::getExistingDirectory(this, QStringLiteral("Ñ¡Ôñ±¾µØ±£´æÄ¿Â¼"));
-    if (dst.isEmpty()) return;
-    QString program = leAdbPath->text().trimmed();
-    QStringList args;
-    if (!currentDeviceSerial.isEmpty()) {
-        args << "-s" << currentDeviceSerial;
-    }
-    args << "pull" << src << dst;
-    appendLog("Ö´ĞĞ: " + program + " " + args.join(" "));
-    adbProcess->start(program, args);
-    progressBar->setRange(0, 0);
-}
-
-void AdbTool::onStartApp()
-{
-    QString pkg = lePackageName->text().trimmed();
-    if (pkg.isEmpty()) {
-        appendLog(QStringLiteral("ÇëÊäÈë°üÃû/Activity£¬ÀıÈç com.example/.MainActivity"));
-        return;
-    }
-    QString program = leAdbPath->text().trimmed();
-    QStringList args;
-    if (!currentDeviceSerial.isEmpty()) args << "-s" << currentDeviceSerial;
-    args << "shell" << "am" << "start" << "-n" << pkg;
-    appendLog(QStringLiteral("Ö´ĞĞ: ") + program + " " + args.join(" "));
-    adbProcess->start(program, args);
-    progressBar->setRange(0, 0);
-}
-
-void AdbTool::onExportLog()
-{
-    QString savePath = QFileDialog::getSaveFileName(this, QStringLiteral("±£´æ log Ñ¹Ëõ°ü"), QString(), "Zip Files (*.zip)");
-    if (savePath.isEmpty()) return;
-    // create tmp file for log
-    QString tmpLog = QDir::temp().filePath(QString("logcat_%1.txt").arg(QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss")));
-    QString program = leAdbPath->text().trimmed();
-    QStringList args;
-    if (!currentDeviceSerial.isEmpty()) args << "-s" << currentDeviceSerial;
-    args << "logcat" << "-d";
-    appendLog(QStringLiteral("µ¼³ö log: ") + tmpLog);
-    QProcess p;
-    p.start(program, args);
-    if (!p.waitForFinished(15000)) {
-        appendLog(QStringLiteral("logcat µ¼³ö³¬Ê±»òÊ§°Ü"));
-        p.kill();
-        return;
-    }
-    QByteArray out = p.readAllStandardOutput();
-    QFile f(tmpLog);
-    if (f.open(QIODevice::WriteOnly)) {
-        f.write(out);
-        f.close();
-    }
-    else {
-        appendLog(QStringLiteral("Ğ´ÈëÁÙÊ± log Ê§°Ü£º") + tmpLog);
-        return;
-    }
-    // zip
-    QFile zipFile(savePath);
-    if (zipFile.exists()) zipFile.remove();
-    if (!zipFile.open(QIODevice::WriteOnly)) {
-        appendLog(QStringLiteral("ÎŞ·¨´´½¨ zip: ") + savePath);
-        return;
-    }
-   // QZipWriter zip(&zipFile);
-  //  zip.addFile(QFileInfo(tmpLog).fileName(), QByteArray(out));
-  //  zip.close();
-   // zipFile.close();
-  //  appendLog("µ¼³ö²¢Ñ¹ËõÍê³É: " + savePath);
-}
-
-void AdbTool::onStartCpuMonitor()
-{
-    QString target = cbMonitorProcess->currentText().trimmed();
-    if (target.isEmpty()) {
-        appendLog(QStringLiteral("ÇëÊäÈë¼à¿Ø½ø³ÌÃû»ò pid"));
-        return;
-    }
-    cpuSeries->clear();
-    cpuXIndex = 0;
-    cpuTimer->start(2000); // Ã¿2Ãë²ÉÑùÒ»´Î
-    appendLog(QStringLiteral("¿ªÊ¼ CPU ¼à¿Ø: ") + target);
-}
-
-void AdbTool::onStopCpuMonitor()
-{
-    cpuTimer->stop();
-    appendLog(QStringLiteral("Í£Ö¹ CPU ¼à¿Ø"));
-}
-
-// --- process callbacks
-void AdbTool::readAdbOutput()
-{
-    QByteArray out = adbProcess->readAllStandardOutput();
-    if (!out.isEmpty()) appendLog(QString::fromUtf8(out));
-}
-
-void AdbTool::adbFinished(int exitCode, QProcess::ExitStatus status)
-{
-    Q_UNUSED(status);
-    appendLog(QString(QStringLiteral("adb ½ø³Ì½áÊø, code=%1")).arg(exitCode));
-    progressBar->setRange(0, 100);
-    progressBar->setValue(100);
-}
-
-// cpu poll
-void AdbTool::cpuPoll()
-{
-    QString target = cbMonitorProcess->currentText().trimmed();
-    if (target.isEmpty()) return;
-
-    QString program = leAdbPath->text().trimmed();
-    QString deviceArg;
-    if (!currentDeviceSerial.isEmpty()) deviceArg = "-s " + currentDeviceSerial + " ";
-
-    // »ñÈ¡ top Êä³ö£¨Ö»È¡Ò»´Î£©
-    QProcess p;
-    // -n 1 »ñÈ¡Ò»´Î£¬¾ßÌå²»Í¬Éè±¸ top ²ÎÊı²îÒì½Ï´ó£¬ÕâÀï²ÉÓÃÍ¨ÓÃ·½°¸
-    QStringList args;
-    if (!currentDeviceSerial.isEmpty()) args << "-s" << currentDeviceSerial;
-    args << "shell" << "top" << "-b" << "-n" << "1";
-    p.start(program, args);
-    if (!p.waitForFinished(5000)) {
-        appendLog(QStringLiteral("cpuPoll: top ³¬Ê±"));
-        p.kill();
-        return;
-    }
-    QString out = p.readAllStandardOutput();
-    QString lineFound;
-    // ³¢ÊÔ°´½ø³ÌÃûÆ¥Åä
-    for (auto ln : out.split('\n')) {
-        if (ln.contains(target)) {
-            lineFound = ln.trimmed();
+    QStringList lines = out.split('\n', Qt::SkipEmptyParts);
+    for (QString line : lines) {
+        line = line.trimmed();
+        if (line.startsWith("Installed as")) {
+            adbPath = line.mid(QString("Installed as").length()).trimmed();
             break;
         }
     }
-    // Èç¹ûÃ»ÓĞÕÒµ½£¬³¢ÊÔÆ¥Åä pid
-    if (lineFound.isEmpty()) {
-        for (auto ln : out.split('\n')) {
-            if (ln.contains(QRegExp("\\b" + QRegExp::escape(target) + "\\b"))) {
-                lineFound = ln.trimmed();
-                break;
-            }
+
+    if (adbPath.isEmpty()) {
+        appendLog(QStringLiteral("æœªæ£€æµ‹åˆ°ç³»ç»Ÿ adbï¼Œå°è¯•ä½¿ç”¨è½¯ä»¶å†…ç½® adb"));
+
+        // 1ï¸âƒ£ è·å–å½“å‰ç¨‹åºè·¯å¾„
+        QString appDir = QCoreApplication::applicationDirPath();
+
+        // 2ï¸âƒ£ æ‹¼æ¥å†…ç½® adb è·¯å¾„
+        QString internalAdbPath = appDir + "/platform-tools/adb.exe";
+
+        if (QFile::exists(internalAdbPath)) {
+            appendLog(QStringLiteral("ä½¿ç”¨å†…ç½® adb: ") + internalAdbPath);
+            leAdbPath->setText(internalAdbPath);
+        }
+        else {
+            appendLog(QStringLiteral("æœªæ‰¾åˆ°å†…ç½® adb: ") + internalAdbPath);
+            leAdbPath->setText("");
         }
     }
-    if (lineFound.isEmpty()) {
-        appendLog(QStringLiteral("Î´ÔÚ top Êä³öÖĞÕÒµ½Ä¿±ê½ø³Ì£¨¿ÉÄÜ°üÃû/½ø³ÌÃû²»Æ¥Åä£©"));
-        return;
+    else {
+        leAdbPath->setText(adbPath);
     }
-    // ³¢ÊÔ½âÎö CPU ÊıÖµ (²»Í¬°²×¿ top ¸ñÊ½²»Í¬£¬ÕâÀïÈ¡µÚ3ÁĞ»ò°üº¬ % µÄ×Ö¶Î)
-    QStringList cols = lineFound.simplified().split(' ');
-    double cpuVal = 0.0;
-    // try find a column with '%' or a numeric value <=100
-    for (auto& c : cols) {
-        if (c.contains('%')) {
-            bool ok = false;
-            QString num = c;
-            num.remove('%');
-            double v = num.toDouble(&ok);
-            if (ok) { cpuVal = v; break; }
-        }
-    }
-    if (cpuVal == 0.0) {
-        // fallback: find first number-like between 0 and 100
-        for (auto& c : cols) {
-            bool ok = false;
-            double v = c.toDouble(&ok);
-            if (ok && v >= 0 && v <= 100) { cpuVal = v; break; }
-        }
-    }
-    cpuSeries->append(cpuXIndex, cpuVal);
-    axisX->setRange(qMax(0, cpuXIndex - 30), cpuXIndex + 1);
-    cpuXIndex++;
-    appendLog(QString("CPU sample: %1 (%2)").arg(cpuVal).arg(lineFound));
+    appendLog("adb version: " + out.trimmed());
 }
+
+//void AdbTool::onListDevices()
+//{
+//   // appendLog(QStringLiteral("åˆ—å‡ºè®¾å¤‡..."));
+//   // QString program = leAdbPath->text().trimmed();
+//   // QProcess p;
+//   // p.start(program, QStringList() << "devices");
+//   // if (!p.waitForStarted(2000)) {
+//   //     appendLog(QStringLiteral("æ— æ³•å¯åŠ¨ adb"));
+//   //     return;
+//   // }
+//   // if (!p.waitForFinished(5000)) {
+//   //     p.kill();
+//   //     appendLog(QStringLiteral("adb devices è¶…æ—¶"));
+//   //     return;
+//   // }
+//   // QString out = p.readAllStandardOutput();
+//   // appendLog(out);
+//   //// cbDevices->clear();
+//   // // parse devices
+//   // auto lines = out.split('\n', Qt::SkipEmptyParts);
+//   // for (auto& ln : lines) {
+//   //     if (ln.contains("\tdevice")) {
+//   //         QString dev = ln.split('\t').first().trimmed();
+//   //         cbDevices->addItem(dev);
+//   //     }
+//   // }
+//   // if (cbDevices->count() > 0) {
+//   //     currentDeviceSerial = cbDevices->currentText();
+//   //     appendLog(QStringLiteral("å½“å‰è®¾å¤‡: " )+ currentDeviceSerial);
+//   // }
+//}
+
+//void AdbTool::onInstallApk()
+//{
+//    QString apk = leApkPath->text().trimmed();
+//    if (apk.isEmpty() || !QFile::exists(apk)) {
+//        appendLog(QStringLiteral("è¯·é€‰æ‹©æœ‰æ•ˆçš„ APK"));
+//        return;
+//    }
+//    QString program = leAdbPath->text().trimmed();
+//    QStringList args;
+//    if (!currentDeviceSerial.isEmpty()) {
+//        args << "-s" << currentDeviceSerial;
+//    }
+//    args << "install" << "-r" << apk;
+//
+//    appendLog(QStringLiteral("æ‰§è¡Œ: ") + program + " " + args.join(" "));
+//    // run in background and read output
+//    adbProcess->start(program, args);
+//    progressBar->setRange(0, 0); // indeterminate
+//}
+//
+//void AdbTool::onPushFile()
+//{
+//    QString src = QFileDialog::getOpenFileName(this, QStringLiteral("é€‰æ‹©æœ¬åœ°æ–‡ä»¶æ¨é€åˆ°è®¾å¤‡"));
+//    if (src.isEmpty()) return;
+//    QString dst = QInputDialog::getText(this, QStringLiteral("ç›®æ ‡è·¯å¾„"), QStringLiteral("è®¾å¤‡ç›®æ ‡è·¯å¾„ (å¦‚ /sdcard/Download/ æˆ– /data/local/tmp/):"));
+//    if (dst.isEmpty()) return;
+//    QString program = leAdbPath->text().trimmed();
+//    QStringList args;
+//    if (!currentDeviceSerial.isEmpty()) {
+//        args << "-s" << currentDeviceSerial;
+//    }
+//    args << "push" << src << dst;
+//    appendLog("æ‰§è¡Œ: " + program + " " + args.join(" "));
+//    adbProcess->start(program, args);
+//    progressBar->setRange(0, 0);
+//}
+//
+//void AdbTool::onPullFile()
+//{
+//    QString src = QInputDialog::getText(this, QStringLiteral("è®¾å¤‡æ–‡ä»¶è·¯å¾„"), QStringLiteral("è®¾å¤‡æ–‡ä»¶è·¯å¾„ (å¦‚ /sdcard/Download/log.txt):"));
+//    if (src.isEmpty()) return;
+//    QString dst = QFileDialog::getExistingDirectory(this, QStringLiteral("é€‰æ‹©æœ¬åœ°ä¿å­˜ç›®å½•"));
+//    if (dst.isEmpty()) return;
+//    QString program = leAdbPath->text().trimmed();
+//    QStringList args;
+//    if (!currentDeviceSerial.isEmpty()) {
+//        args << "-s" << currentDeviceSerial;
+//    }
+//    args << "pull" << src << dst;
+//    appendLog("æ‰§è¡Œ: " + program + " " + args.join(" "));
+//    adbProcess->start(program, args);
+//    progressBar->setRange(0, 0);
+//}
+//
+//void AdbTool::onStartApp()
+//{
+//    QString pkg = lePackageName->text().trimmed();
+//    if (pkg.isEmpty()) {
+//        appendLog(QStringLiteral("è¯·è¾“å…¥åŒ…å/Activityï¼Œä¾‹å¦‚ com.example/.MainActivity"));
+//        return;
+//    }
+//    QString program = leAdbPath->text().trimmed();
+//    QStringList args;
+//    if (!currentDeviceSerial.isEmpty()) args << "-s" << currentDeviceSerial;
+//    args << "shell" << "am" << "start" << "-n" << pkg;
+//    appendLog(QStringLiteral("æ‰§è¡Œ: ") + program + " " + args.join(" "));
+//    adbProcess->start(program, args);
+//    progressBar->setRange(0, 0);
+//}
+//
+//void AdbTool::onExportLog()
+//{
+//    QString savePath = QFileDialog::getSaveFileName(this, QStringLiteral("ä¿å­˜ log å‹ç¼©åŒ…"), QString(), "Zip Files (*.zip)");
+//    if (savePath.isEmpty()) return;
+//    // create tmp file for log
+//    QString tmpLog = QDir::temp().filePath(QString("logcat_%1.txt").arg(QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss")));
+//    QString program = leAdbPath->text().trimmed();
+//    QStringList args;
+//    if (!currentDeviceSerial.isEmpty()) args << "-s" << currentDeviceSerial;
+//    args << "logcat" << "-d";
+//    appendLog(QStringLiteral("å¯¼å‡º log: ") + tmpLog);
+//    QProcess p;
+//    p.start(program, args);
+//    if (!p.waitForFinished(15000)) {
+//        appendLog(QStringLiteral("logcat å¯¼å‡ºè¶…æ—¶æˆ–å¤±è´¥"));
+//        p.kill();
+//        return;
+//    }
+//    QByteArray out = p.readAllStandardOutput();
+//    QFile f(tmpLog);
+//    if (f.open(QIODevice::WriteOnly)) {
+//        f.write(out);
+//        f.close();
+//    }
+//    else {
+//        appendLog(QStringLiteral("å†™å…¥ä¸´æ—¶ log å¤±è´¥ï¼š") + tmpLog);
+//        return;
+//    }
+//    // zip
+//    QFile zipFile(savePath);
+//    if (zipFile.exists()) zipFile.remove();
+//    if (!zipFile.open(QIODevice::WriteOnly)) {
+//        appendLog(QStringLiteral("æ— æ³•åˆ›å»º zip: ") + savePath);
+//        return;
+//    }
+//   // QZipWriter zip(&zipFile);
+//  //  zip.addFile(QFileInfo(tmpLog).fileName(), QByteArray(out));
+//  //  zip.close();
+//   // zipFile.close();
+//  //  appendLog("å¯¼å‡ºå¹¶å‹ç¼©å®Œæˆ: " + savePath);
+//}
+//
+//void AdbTool::onStartCpuMonitor()
+//{
+//    QString target = cbMonitorProcess->currentText().trimmed();
+//    if (target.isEmpty()) {
+//        appendLog(QStringLiteral("è¯·è¾“å…¥ç›‘æ§è¿›ç¨‹åæˆ– pid"));
+//        return;
+//    }
+//    cpuSeries->clear();
+//    cpuXIndex = 0;
+//    cpuTimer->start(2000); // æ¯2ç§’é‡‡æ ·ä¸€æ¬¡
+//    appendLog(QStringLiteral("å¼€å§‹ CPU ç›‘æ§: ") + target);
+//}
+//
+//void AdbTool::onStopCpuMonitor()
+//{
+//    cpuTimer->stop();
+//    appendLog(QStringLiteral("åœæ­¢ CPU ç›‘æ§"));
+//}
+//
+//// --- process callbacks
+//void AdbTool::readAdbOutput()
+//{
+//    QByteArray out = adbProcess->readAllStandardOutput();
+//    if (!out.isEmpty()) appendLog(QString::fromUtf8(out));
+//}
+//
+//void AdbTool::adbFinished(int exitCode, QProcess::ExitStatus status)
+//{
+//    Q_UNUSED(status);
+//    appendLog(QString(QStringLiteral("adb è¿›ç¨‹ç»“æŸ, code=%1")).arg(exitCode));
+//    progressBar->setRange(0, 100);
+//    progressBar->setValue(100);
+//}
+//
+//// cpu poll
+//void AdbTool::cpuPoll()
+//{
+//    QString target = cbMonitorProcess->currentText().trimmed();
+//    if (target.isEmpty()) return;
+//
+//    QString program = leAdbPath->text().trimmed();
+//    QString deviceArg;
+//    if (!currentDeviceSerial.isEmpty()) deviceArg = "-s " + currentDeviceSerial + " ";
+//
+//    // è·å– top è¾“å‡ºï¼ˆåªå–ä¸€æ¬¡ï¼‰
+//    QProcess p;
+//    // -n 1 è·å–ä¸€æ¬¡ï¼Œå…·ä½“ä¸åŒè®¾å¤‡ top å‚æ•°å·®å¼‚è¾ƒå¤§ï¼Œè¿™é‡Œé‡‡ç”¨é€šç”¨æ–¹æ¡ˆ
+//    QStringList args;
+//    if (!currentDeviceSerial.isEmpty()) args << "-s" << currentDeviceSerial;
+//    args << "shell" << "top" << "-b" << "-n" << "1";
+//    p.start(program, args);
+//    if (!p.waitForFinished(5000)) {
+//        appendLog(QStringLiteral("cpuPoll: top è¶…æ—¶"));
+//        p.kill();
+//        return;
+//    }
+//    QString out = p.readAllStandardOutput();
+//    QString lineFound;
+//    // å°è¯•æŒ‰è¿›ç¨‹ååŒ¹é…
+//    for (auto ln : out.split('\n')) {
+//        if (ln.contains(target)) {
+//            lineFound = ln.trimmed();
+//            break;
+//        }
+//    }
+//    // å¦‚æœæ²¡æœ‰æ‰¾åˆ°ï¼Œå°è¯•åŒ¹é… pid
+//    if (lineFound.isEmpty()) {
+//        for (auto ln : out.split('\n')) {
+//            if (ln.contains(QRegExp("\\b" + QRegExp::escape(target) + "\\b"))) {
+//                lineFound = ln.trimmed();
+//                break;
+//            }
+//        }
+//    }
+//    if (lineFound.isEmpty()) {
+//        appendLog(QStringLiteral("æœªåœ¨ top è¾“å‡ºä¸­æ‰¾åˆ°ç›®æ ‡è¿›ç¨‹ï¼ˆå¯èƒ½åŒ…å/è¿›ç¨‹åä¸åŒ¹é…ï¼‰"));
+//        return;
+//    }
+//    // å°è¯•è§£æ CPU æ•°å€¼ (ä¸åŒå®‰å“ top æ ¼å¼ä¸åŒï¼Œè¿™é‡Œå–ç¬¬3åˆ—æˆ–åŒ…å« % çš„å­—æ®µ)
+//    QStringList cols = lineFound.simplified().split(' ');
+//    double cpuVal = 0.0;
+//    // try find a column with '%' or a numeric value <=100
+//    for (auto& c : cols) {
+//        if (c.contains('%')) {
+//            bool ok = false;
+//            QString num = c;
+//            num.remove('%');
+//            double v = num.toDouble(&ok);
+//            if (ok) { cpuVal = v; break; }
+//        }
+//    }
+//    if (cpuVal == 0.0) {
+//        // fallback: find first number-like between 0 and 100
+//        for (auto& c : cols) {
+//            bool ok = false;
+//            double v = c.toDouble(&ok);
+//            if (ok && v >= 0 && v <= 100) { cpuVal = v; break; }
+//        }
+//    }
+//    cpuSeries->append(cpuXIndex, cpuVal);
+//    axisX->setRange(qMax(0, cpuXIndex - 30), cpuXIndex + 1);
+//    cpuXIndex++;
+//    appendLog(QString("CPU sample: %1 (%2)").arg(cpuVal).arg(lineFound));
+//}

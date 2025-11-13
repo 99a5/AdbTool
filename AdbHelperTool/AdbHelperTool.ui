@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>AdbHelperToolClass</class>
+ <widget class="QMainWindow" name="AdbHelperToolClass">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>600</width>
+    <height>400</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>AdbHelperTool</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="currentIndex">
+       <number>5</number>
+      </property>
+      <widget class="QWidget" name="deviceManagementPage">
+       <attribute name="title">
+        <string>设备管理</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="batcjOperationPage">
+       <attribute name="title">
+        <string>批量操作</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="appManagementPage">
+       <attribute name="title">
+        <string>应用管理</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="fileInputPage">
+       <attribute name="title">
+        <string>文件传输</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="commandToolPage">
+       <attribute name="title">
+        <string>命令工具</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="tab_6">
+       <attribute name="title">
+        <string>日志</string>
+       </attribute>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources>
+  <include location="AdbHelperTool.qrc"/>
+ </resources>
+ <connections/>
+</ui>

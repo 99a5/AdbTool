@@ -5,6 +5,8 @@ VisualStudioVersion = 17.9.34714.143
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AdbTool", "AdbTool\AdbTool.vcxproj", "{CB1ECB32-F5C4-4AC9-BC93-49479B8988C7}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AdbHelperTool", "AdbHelperTool\AdbHelperTool.vcxproj", "{5E3BE3BC-FF2F-4D97-B659-68F5EFE54038}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -15,6 +17,10 @@ Global
 		{CB1ECB32-F5C4-4AC9-BC93-49479B8988C7}.Debug|x64.Build.0 = Debug|x64
 		{CB1ECB32-F5C4-4AC9-BC93-49479B8988C7}.Release|x64.ActiveCfg = Release|x64
 		{CB1ECB32-F5C4-4AC9-BC93-49479B8988C7}.Release|x64.Build.0 = Release|x64
+		{5E3BE3BC-FF2F-4D97-B659-68F5EFE54038}.Debug|x64.ActiveCfg = Debug|x64
+		{5E3BE3BC-FF2F-4D97-B659-68F5EFE54038}.Debug|x64.Build.0 = Debug|x64
+		{5E3BE3BC-FF2F-4D97-B659-68F5EFE54038}.Release|x64.ActiveCfg = Release|x64
+		{5E3BE3BC-FF2F-4D97-B659-68F5EFE54038}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
