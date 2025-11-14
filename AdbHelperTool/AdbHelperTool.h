@@ -12,6 +12,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QStatusBar>
+#include "Common.h"
 
 class AdbHelperTool : public QMainWindow
 {
@@ -20,11 +21,37 @@ class AdbHelperTool : public QMainWindow
 public:
     AdbHelperTool(QWidget *parent = nullptr);
     ~AdbHelperTool();
+
+    void connectSlots();
+
+
+
 private slots:
-    void refreshDeviceList();  // 刷新设备列表
-    void selectAllDevices(bool isChecked);  // 全选/取消全选
+
+    // 刷新设备列表
+    void refreshDeviceList();    
+
+    // 全选
+    void slotSelectAll();     
+
+    // 反选
+    void slotCancelSelectAll(); 
+
+    // 单选
+    void slotChangeCheck(); 
 
 private:
+    // 获取adb设备列表
+    std::vector<DeviceInfo> getAdbDeviceList();
+
+    // 检测adb路径
+    void detectAdbPath();
+
+    //日支输出
+    void appendLog(const QString& s);
+
+    QString runAdbCommand(const QString& serial, const QString& cmd);
+
     QTabWidget* m_tabWidget;  // 顶部页签
     QWidget* m_deviceListPage;  // 设备列表页
     QListWidget* m_deviceList;  // 设备列表控件
@@ -33,13 +60,9 @@ private:
     QPushButton* m_refreshBtn;  // 刷新按钮
     QCheckBox* m_allSelectBox;  // 全选复选框
 
-    // 模拟设备数据结构（实际需解析 adb 命令结果）
-    struct DeviceInfo {
-        QString name;       // 设备型号
-        QString system;     // 系统版本
-        QString serial;     // 序列号
-    };
 
 private:
     Ui::AdbHelperToolClass ui;
+
+    QString m_adbPath;
 };
