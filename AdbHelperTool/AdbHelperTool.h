@@ -12,6 +12,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QStatusBar>
+#include <QProcess>
 #include "Common.h"
 
 class AdbHelperTool : public QMainWindow
@@ -24,7 +25,8 @@ public:
 
     void connectSlots();
 
-
+    //批量操作界面
+    void initBatcjUI();
 
 private slots:
 
@@ -38,7 +40,34 @@ private slots:
     void slotCancelSelectAll(); 
 
     // 单选
-    void slotChangeCheck(); 
+    void slotChangeCheck(int index, bool checked);
+
+    // 批量重启设备
+    void slotRebootDeviceBth();
+
+    // 获取选中设备列表
+    std::vector<DeviceInfo> getCheckedDeviceList();
+
+
+    //选择 APK 文件
+    void onBrowseApk();
+    //批量安装
+    void onBatchInstall();
+    //批量卸载
+    void onBatchUninstall();
+
+    //选择要推送的文件
+    void onBrowsePushLocal();
+    //批量推送
+    void onBatchPush();
+
+    //选择保存目录
+    void onBrowsePullLocal();
+    //批量拉取
+    void onBatchPull();
+
+
+
 
 private:
     // 获取adb设备列表
@@ -52,17 +81,22 @@ private:
 
     QString runAdbCommand(const QString& serial, const QString& cmd);
 
-    QTabWidget* m_tabWidget;  // 顶部页签
-    QWidget* m_deviceListPage;  // 设备列表页
-    QListWidget* m_deviceList;  // 设备列表控件
-    QLabel* m_deviceCountLabel;  // 设备数量标题
-    QPushButton* m_restartBtn;  // 批量重启按钮
-    QPushButton* m_refreshBtn;  // 刷新按钮
-    QCheckBox* m_allSelectBox;  // 全选复选框
+    // 运行adb命令
+    void runAdbCommandWithLog(const DeviceInfo& dev,
+        const QStringList& args,
+        const QString& runningText);
 
+    void updateProgressLog();
+    void appendProgressLog(const QString& log);
 
 private:
     Ui::AdbHelperToolClass ui;
-
+    QStatusBar* statusBar;
     QString m_adbPath;
+    std::vector<DeviceInfo> vecDeviceInfos;
+
+    QMap<QString, QProcess*> m_runningProcesses;
+    std::vector<DeviceInfo> m_vecDevices;           //选中设备
+
+    QString versionOutput;
 };
