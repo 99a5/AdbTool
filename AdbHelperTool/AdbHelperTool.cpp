@@ -235,7 +235,7 @@ void AdbHelperTool::appendLog(const QString& s)
 	ui.logView->append(QString("[%1] %2").arg(t, s));
 }
 
-// 刷新设备列表（核心逻辑）
+/********************************** 设备管理页面 **************************************************/
 void AdbHelperTool::refreshDeviceList()
 {
 	ui.listWidget->clear();
@@ -476,9 +476,7 @@ void AdbHelperTool::onBatchPull()
 	}
 }
 
-void AdbHelperTool::runAdbCommandWithLog(const DeviceInfo& dev,
-	const QStringList& args,
-	const QString& runningText)
+void AdbHelperTool::runAdbCommandWithLog(const DeviceInfo& dev,const QStringList& args,const QString& runningText)
 {
 	appendLog(QString("[%1] %2").arg(dev.serial, runningText));
 	appendProgressLog(QString("[%1] %2").arg(dev.serial, runningText));
@@ -521,3 +519,5 @@ void AdbHelperTool::appendProgressLog(const QString& log)
 {
 	ui.progressEdit->append(log);
 }
+
+/********************************** 单设备操作页面 *********************************/

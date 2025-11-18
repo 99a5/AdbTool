@@ -78,16 +78,14 @@ private:
 
     //日支输出
     void appendLog(const QString& s);
-
-    QString runAdbCommand(const QString& serial, const QString& cmd);
-
-    // 运行adb命令
-    void runAdbCommandWithLog(const DeviceInfo& dev,
-        const QStringList& args,
-        const QString& runningText);
-
     void updateProgressLog();
     void appendProgressLog(const QString& log);
+
+
+    // 运行adb命令
+    void runAdbCommandWithLog(const DeviceInfo& dev,const QStringList& args,const QString& runningText);
+    QString runAdbCommand(const QString& serial, const QString& cmd);
+
 
 private:
     Ui::AdbHelperToolClass ui;
