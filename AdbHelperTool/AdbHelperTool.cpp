@@ -378,7 +378,7 @@ void AdbHelperTool::slotRebootDeviceBth()
 {
 	//auto checkedDevices = getCheckedDeviceList();
 	if (m_vecDevices.empty()) {
-		QMessageBox::information(this, "提示", "请先勾选需要重启的设备");
+		QMessageBox::information(this, QStringLiteral("提示"), QStringLiteral("请先勾选需要重启的设备"));
 		return;
 	}
 
@@ -427,9 +427,9 @@ void AdbHelperTool::onBatchInstall()
 		return;
 	}
 
-	updateProgressLog();
+	m_runningProcesses.clear();
 	appendLog(QStringLiteral("开始 %1 台设备安装应用...").arg(vecDeviceInfos.size()));
-	appendProgressLog(QStringLiteral("开始 %1 台设备安装应用...").arg(vecDeviceInfos.size()));
+	appendLog(QStringLiteral("开始 %1 台设备安装应用...").arg(vecDeviceInfos.size()));
 
 	for (const auto& dev : vecDeviceInfos)
 	{
@@ -448,9 +448,9 @@ void AdbHelperTool::onBatchUninstall()
 	}
 
 	appendLog(QStringLiteral("开始 %1 台设备卸载应用...").arg(vecDeviceInfos.size()));
-	appendProgressLog(QStringLiteral("开始 %1 台设备卸载应用...").arg(vecDeviceInfos.size()));
+	appendLog(QStringLiteral("开始 %1 台设备卸载应用...").arg(vecDeviceInfos.size()));
 
-	updateProgressLog();
+	m_runningProcesses.clear();
 
 	for (const auto& dev : vecDeviceInfos)
 	{
@@ -477,9 +477,9 @@ void AdbHelperTool::onBatchPush()
 		return;
 	}
 
-	updateProgressLog();
+	m_runningProcesses.clear();
 	appendLog(QStringLiteral("开始 %1 台设备推送文件...").arg(vecDeviceInfos.size()));
-	appendProgressLog(QStringLiteral("开始 %1 台设备推送文件...").arg(vecDeviceInfos.size()));
+	appendLog(QStringLiteral("开始 %1 台设备推送文件...").arg(vecDeviceInfos.size()));
 
 	for (const auto& dev : vecDeviceInfos)
 	{
@@ -506,9 +506,9 @@ void AdbHelperTool::onBatchPull()
 		return;
 	}
 
-	updateProgressLog();
+	m_runningProcesses.clear();
 	appendLog(QStringLiteral("开始 %1 台设备拉取文件...").arg(vecDeviceInfos.size()));
-	appendProgressLog(QStringLiteral("开始 %1 台设备拉取文件...").arg(vecDeviceInfos.size()));
+	appendLog(QStringLiteral("开始 %1 台设备拉取文件...").arg(vecDeviceInfos.size()));
 
 	for (const auto& dev : vecDeviceInfos)
 	{
@@ -520,7 +520,7 @@ void AdbHelperTool::onBatchPull()
 void AdbHelperTool::runAdbCommandWithLog(const DeviceInfo& dev,const QStringList& args,const QString& runningText)
 {
 	appendLog(QString("[%1] %2").arg(dev.serial, runningText));
-	appendProgressLog(QString("[%1] %2").arg(dev.serial, runningText));
+	appendLog(QString("[%1] %2").arg(dev.serial, runningText));
 
 	QProcess* proc = new QProcess(this);
 	m_runningProcesses[dev.serial] = proc;
@@ -531,16 +531,16 @@ void AdbHelperTool::runAdbCommandWithLog(const DeviceInfo& dev,const QStringList
 			if (status == QProcess::CrashExit)
 			{
 				appendLog(QString("[%1] %2").arg(dev.serial, QStringLiteral("失败：进程崩溃")));
-				appendProgressLog(QString("[%1] %2").arg(dev.serial, QStringLiteral("失败：进程崩溃")));
+				appendLog(QString("[%1] %2").arg(dev.serial, QStringLiteral("失败：进程崩溃")));
 			}
 			else if (exitCode == 0)
 			{
 				appendLog(QString("[%1] %2").arg(dev.serial, QStringLiteral("成功")));
-				appendProgressLog(QString("[%1] %2").arg(dev.serial, QStringLiteral("成功")));
+				appendLog(QString("[%1] %2").arg(dev.serial, QStringLiteral("成功")));
 			}
 			else {
 				appendLog(QString("[%1] %2 exit=%3").arg(dev.serial, QStringLiteral("失败"), QString::number(exitCode)));
-				appendProgressLog(QString("[%1] %2 exit=%3").arg(dev.serial, QStringLiteral("失败"), QString::number(exitCode)));
+				appendLog(QString("[%1] %2 exit=%3").arg(dev.serial, QStringLiteral("失败"), QString::number(exitCode)));
 			}
 
 			proc->deleteLater();
@@ -550,16 +550,8 @@ void AdbHelperTool::runAdbCommandWithLog(const DeviceInfo& dev,const QStringList
 	proc->start("adb", args);
 }
 
-void AdbHelperTool::updateProgressLog()
-{
-	ui.progressEdit->clear();   // 清空日志
-	m_runningProcesses.clear();
-}
 
-void AdbHelperTool::appendProgressLog(const QString& log)
-{
-	ui.progressEdit->append(log);
-}
+
 
 /********************************** 单设备操作页面 *********************************/
 
@@ -687,7 +679,6 @@ void AdbHelperTool::slotForceStop()
 
 	runAdb("shell am force-stop " + pkg, serial);
 }
-
 
 QString AdbHelperTool::runAdb(const QString& cmd, const QString& serial)
 {
