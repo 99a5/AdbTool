@@ -75,6 +75,34 @@ void AdbHelperTool::connectSlots()
 	connect(ui.pullLocalFileBth, &QPushButton::clicked, this, &AdbHelperTool::onBrowsePullLocal);
 	connect(ui.batchPullFileBth, &QPushButton::clicked, this, &AdbHelperTool::onBatchPull);
 
+	//单设备页面
+	//切换设备
+	connect(ui.deviceSwitchBox, SIGNAL(currentIndexChanged(int)),this, SLOT(slotChangeDevice(int)));
+
+	//系统应用
+	connect(ui.cbSystemApp, &QCheckBox::stateChanged, this, &AdbHelperTool::filterAppList);
+	//第三方应用
+	connect(ui.cbThirdParty, &QCheckBox::stateChanged, this, &AdbHelperTool::filterAppList);
+	//搜索应用
+	connect(ui.leSearch, &QLineEdit::textChanged, this, &AdbHelperTool::filterAppList);
+	//应用列表
+	connect(ui.listApp, &QListWidget::itemSelectionChanged,
+		this, &AdbHelperTool::slotAppSelected);
+	//安装应用
+	//connect(ui.btnInstallApk, &QPushButton::clicked, this, &AdbHelperTool::slotInstallApk);
+	////卸载
+	//connect(ui.btnUninstallApp, &QPushButton::clicked, this, &AdbHelperTool::slotUninstall);
+	////强停
+	//connect(ui.btnForceStop, &QPushButton::clicked, this, &AdbHelperTool::slotForceStop);
+	////选择文件
+	//connect(ui.btnSelectUploadFile, &QPushButton::clicked, this, &AdbHelperTool::slotChooseFile);
+	////上传文件
+	//connect(ui.btnUploadFile, &QPushButton::clicked, this, &AdbHelperTool::slotUploadFile);
+
+	// 拖拽区域
+	ui.dragAreaEdit->setAcceptDrops(true);
+	ui.dragAreaEdit->installEventFilter(this);
+
 }
 
 void AdbHelperTool::initBatcjUI()
@@ -242,6 +270,8 @@ void AdbHelperTool::refreshDeviceList()
 
 	//std::vector<DeviceInfo> vecDeviceInfos =  getAdbDeviceList();
 
+	// 更新设备切换
+	ui.deviceSwitchBox->clear();
 	for (const auto& iter : vecDeviceInfos)
 	{
 		QListWidgetItem* item = new QListWidgetItem(ui.listWidget);
@@ -255,6 +285,10 @@ void AdbHelperTool::refreshDeviceList()
 
 		itemWidget->setDeviceInfo(iter);
 
+		QString displayText = iter.name + " (" + iter.serial + ")";
+		ui.deviceSwitchBox->addItem(displayText, iter.serial); // userData = serial
+		//ui.deviceSwitchBox->addItem(QStringLiteral("全部设备"));	
+
 		//手动勾选
 		connect(itemWidget, &DeviceItemWidget::sigChangeCheck, this, &AdbHelperTool::slotChangeCheck);
 	}
@@ -262,11 +296,18 @@ void AdbHelperTool::refreshDeviceList()
 	// 更新连接设备数量
 	ui.label_2->setText(QString::number(ui.listWidget->count()));
 
+
 	//更新状态栏时间
 	QString timeStr = QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss");
 	statusBar->showMessage(
 		QStringLiteral("版本 %1 | 上次刷新：%2").arg(versionOutput, timeStr)
 	);
+	
+	if (ui.deviceSwitchBox->count() > 0)
+	{
+		ui.deviceSwitchBox->setCurrentIndex(0);
+		//slotSwitchDevice(0);
+	}
 }
 
 void AdbHelperTool::slotSelectAll()
@@ -521,3 +562,157 @@ void AdbHelperTool::appendProgressLog(const QString& log)
 }
 
 /********************************** 单设备操作页面 *********************************/
+
+void AdbHelperTool::slotChangeDevice(int index)
+{
+	if (index < 0 || index >= vecDeviceInfos.size())
+		return;
+
+	m_dev = vecDeviceInfos[index];
+
+	loadAppList(m_dev.serial);
+}
+
+void AdbHelperTool::loadAppList( QString serial)
+{
+	ui.listApp->clear();
+	currentAppList.clear();
+
+	QStringList args;
+	args << "-s" << serial << "shell" << "pm" << "list" << "packages" << "-f";
+
+	QString out = runAdbAndGetOutput(args);  // 返回 adb 输出字符串
+
+	QStringList lines = out.split("\n", Qt::SkipEmptyParts);
+
+	for (QString& line : lines)
+	{
+		bool isSystem = line.contains("/system/");
+
+		// line 格式示例: package:/data/app/com.example.test-1/base.apk=com.example.test
+		QString pkg = line.section('=', 1, 1).trimmed();
+		QString appPath = line.section('=', 0, 0).mid(QString("package:").length()).trimmed();
+		QString appName = QFileInfo(appPath).baseName();  // 用 APK 文件名做简单名称
+
+		currentAppList.push_back({ appName, pkg, isSystem });
+	}
+
+	filterAppList();
+}
+
+void AdbHelperTool::filterAppList()
+{
+	ui.listApp->clear();
+
+	bool showSystem = ui.cbSystemApp->isChecked();
+	bool showThird = ui.cbThirdParty->isChecked();
+	QString key = ui.leSearch->text().trimmed();
+
+	for (auto& app : currentAppList)
+	{
+		if (app.systemApp && !showSystem) continue;
+		if (!app.systemApp && !showThird) continue;
+		if (!key.isEmpty() && !app.packageName.contains(key, Qt::CaseInsensitive)) continue;
+
+		ui.listApp->addItem(app.packageName);
+	}
+}
+
+QString AdbHelperTool::runAdbAndGetOutput(const QStringList& args)
+{
+	QString adbExe = m_adbPath.isEmpty() ? "adb" : m_adbPath;
+
+	QProcess process;
+	process.setProgram(adbExe);
+	process.setArguments(args);
+
+	process.start();
+
+	if (!process.waitForStarted(3000)) {
+		appendLog(QStringLiteral("adb 启动失败: ") + adbExe);
+		return "";
+	}
+
+	if (!process.waitForFinished(10000)) {
+		appendLog(QStringLiteral("adb 执行超时"));
+		process.kill();
+		return "";
+	}
+
+	QString out = QString::fromLocal8Bit(process.readAllStandardOutput());
+	QString err = QString::fromLocal8Bit(process.readAllStandardError());
+
+	if (!err.trimmed().isEmpty()) {
+		appendLog(QStringLiteral("adb 错误: ") + err);
+	}
+
+	return out.trimmed();
+}
+
+void AdbHelperTool::slotAppSelected()
+{
+	bool has = ui.listApp->currentItem() != nullptr;
+
+	ui.btnUninstallApp->setEnabled(has);
+	ui.btnForceStop->setEnabled(has);
+}
+
+void AdbHelperTool::slotInstallApk()
+{
+	QString apk = QFileDialog::getOpenFileName(this, QStringLiteral("选择 APK"), "", "*.apk");
+	if (apk.isEmpty()) return;
+
+	QString serial = ui.deviceSwitchBox->currentData().toString(); // 修正点
+
+	runAdb("install -r \"" + apk + "\"", serial);
+
+}
+
+void AdbHelperTool::slotUninstall()
+{
+	if (!ui.listApp->currentItem()) return;
+
+	QString pkg = ui.listApp->currentItem()->text();
+	QString serial = ui.deviceSwitchBox->currentData().toString();
+
+	runAdb("uninstall " + pkg, serial);
+}
+
+void AdbHelperTool::slotForceStop()
+{
+	if (!ui.listApp->currentItem()) return;
+
+	QString pkg = ui.listApp->currentItem()->text();
+	QString serial = ui.deviceSwitchBox->currentData().toString();
+
+	runAdb("shell am force-stop " + pkg, serial);
+}
+
+
+QString AdbHelperTool::runAdb(const QString& cmd, const QString& serial)
+{
+	QProcess process;
+	QStringList args;
+
+	// 指定设备
+	if (!serial.isEmpty()) {
+		args << "-s" << serial;
+	}
+
+	// 拆分命令字符串，例如 "install -r xxx.apk"
+	args += QProcess::splitCommand(cmd);
+
+	process.start("adb", args);
+	process.waitForFinished();
+
+	QString out = QString::fromLocal8Bit(process.readAllStandardOutput());
+	QString err = QString::fromLocal8Bit(process.readAllStandardError());
+
+	if (!err.isEmpty())
+		qDebug() << "[ADB ERROR]" << err;
+
+	return out + err;
+}
+
+
+

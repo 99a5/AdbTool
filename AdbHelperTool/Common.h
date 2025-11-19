@@ -8,3 +8,10 @@ struct DeviceInfo {
     QString system;     // 系统版本
     QString serial;     // 序列号
 };
+
+// 保存单设备应用信息
+struct AppInfo {
+    QString appName;    // 应用名称
+    QString packageName; // 应用包名
+    bool systemApp;     // 是否系统应用
+};

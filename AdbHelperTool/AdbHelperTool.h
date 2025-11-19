@@ -27,6 +27,8 @@ public:
 
     //批量操作界面
     void initBatcjUI();
+    void loadAppList(QString serial);
+    void filterAppList();
 
 private slots:
 
@@ -66,9 +68,13 @@ private slots:
     //批量拉取
     void onBatchPull();
 
+    void slotChangeDevice(int index);
 
+    void slotAppSelected();
 
-
+    void slotInstallApk();
+    void slotUninstall();
+    void slotForceStop();
 private:
     // 获取adb设备列表
     std::vector<DeviceInfo> getAdbDeviceList();
@@ -85,7 +91,8 @@ private:
     // 运行adb命令
     void runAdbCommandWithLog(const DeviceInfo& dev,const QStringList& args,const QString& runningText);
     QString runAdbCommand(const QString& serial, const QString& cmd);
-
+    QString runAdbAndGetOutput(const QStringList& args);
+    bool runAdb(const QString& cmd, const QString& serial);
 
 private:
     Ui::AdbHelperToolClass ui;
@@ -97,4 +104,9 @@ private:
     std::vector<DeviceInfo> m_vecDevices;           //选中设备
 
     QString versionOutput;
+
+    DeviceInfo m_dev;
+
+    // 当前设备的应用列表
+    std::vector<AppInfo> currentAppList;
 };
