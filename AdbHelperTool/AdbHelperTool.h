@@ -1,18 +1,10 @@
 #pragma once
 
-#include <QtWidgets/QMainWindow>
-#include "ui_AdbHelperTool.h"
 #include <QMainWindow>
-#include <QTabWidget>
-#include <QListWidget>
-#include <QListWidgetItem>
-#include <QCheckBox>
-#include <QPushButton>
-#include <QLabel>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QStatusBar>
 #include <QProcess>
+#include <QStatusBar>
+#include <QMap>
+#include "ui_AdbHelperTool.h"
 #include "Common.h"
 
 class AdbHelperTool : public QMainWindow
@@ -20,90 +12,86 @@ class AdbHelperTool : public QMainWindow
     Q_OBJECT
 
 public:
-    AdbHelperTool(QWidget *parent = nullptr);
+    explicit AdbHelperTool(QWidget* parent = nullptr);
     ~AdbHelperTool();
 
+private:
+    /* ---------------------- 初始化与连接 ---------------------- */
+    void initUI();
     void connectSlots();
+    void detectAdbPath();
 
-    //批量操作界面
-    void initBatcjUI();
-    void loadAppList(QString serial);
+    /* ---------------------- 设备管理 ---------------------- */
+    void updateDeviceList();
+    std::vector<DeviceInfo> getAdbDeviceList();
+    std::vector<DeviceInfo> getCheckedDevices();
+    void setDeviceOnlineState(const DeviceInfo& dev, bool ok);
+
+    /* ---------------------- ADB 命令封装 ---------------------- */
+    QString runAdb(const QString& serial, const QString& cmd);
+    QString runAdbRaw(const QStringList& args);
+    void runAdbAsync(const DeviceInfo& dev,
+        const QStringList& args,
+        const QString& runningText);
+
+    /* ---------------------- 日志输出 ---------------------- */
+    void appendLog(const QString& text);
+
+    /* ---------------------- 应用管理（单设备页面） ---------------------- */
+    void loadInstalledApps(const QString& serial);
     void filterAppList();
 
 private slots:
+    /* ---------------------- 设备选项 ---------------------- */
+    void onRefreshDevices();
+    void onSelectAllDevices();
+    void onUnselectAllDevices();
+    void onDeviceCheckStateChanged(int index, bool checked);
+    void onBatchReboot();
 
-    // 刷新设备列表
-    void refreshDeviceList();    
-
-    // 全选
-    void slotSelectAll();     
-
-    // 反选
-    void slotCancelSelectAll(); 
-
-    // 单选
-    void slotChangeCheck(int index, bool checked);
-
-    // 批量重启设备
-    void slotRebootDeviceBth();
-
-    // 获取选中设备列表
-    std::vector<DeviceInfo> getCheckedDeviceList();
-
-
-    //选择 APK 文件
+    /* ---------------------- 批量设备操作 ---------------------- */
+    /* ---------------------- APK 操作 ---------------------- */
     void onBrowseApk();
-    //批量安装
     void onBatchInstall();
-    //批量卸载
     void onBatchUninstall();
 
-    //选择要推送的文件
-    void onBrowsePushLocal();
-    //批量推送
+    /* ---------------------- 推送/拉取 ---------------------- */
+    void onBrowsePushFile();
     void onBatchPush();
 
-    //选择保存目录
-    void onBrowsePullLocal();
-    //批量拉取
+    void onBrowsePullDir();
     void onBatchPull();
 
-    void slotChangeDevice(int index);
+    /* ---------------------- 单设备应用操作 ---------------------- */
+    void onCurrentDeviceChanged(int index);
+    void onAppSelected();
+    void onInstallSingle();
+    void onUninstallSingle();
+    void onForceStopSingle();
 
-    void slotAppSelected();
+    void onRunCustomCommand();
+    void onStartTerminal();
+    void onLogExport();
 
-    void slotInstallApk();
-    void slotUninstall();
-    void slotForceStop();
-private:
-    // 获取adb设备列表
-    std::vector<DeviceInfo> getAdbDeviceList();
-
-    // 检测adb路径
-    void detectAdbPath();
-
-    //日支输出
-    void appendLog(const QString& s);
-  
-    // 运行adb命令
-    void runAdbCommandWithLog(const DeviceInfo& dev,const QStringList& args,const QString& runningText);
-    QString runAdbCommand(const QString& serial, const QString& cmd);
-    QString runAdbAndGetOutput(const QStringList& args);
-    QString runAdb(const QString& cmd, const QString& serial);
 
 private:
+    /* ---------------------- UI / 状态 ---------------------- */
     Ui::AdbHelperToolClass ui;
-    QStatusBar* statusBar;
+    QStatusBar* statusBar = nullptr;
+
     QString m_adbPath;
-    std::vector<DeviceInfo> vecDeviceInfos;
-
-    QMap<QString, QProcess*> m_runningProcesses;
-    std::vector<DeviceInfo> m_vecDevices;           //选中设备
-
     QString versionOutput;
 
-    DeviceInfo m_dev;
+    //设备列表（刷新得到）
+    std::vector<DeviceInfo> m_allDevices;
+    std::vector<DeviceInfo> vecDeviceInfos;
+    DeviceInfo m_selectedDevices;
+    //当前用于单设备页面的设备
+    DeviceInfo m_currentDevice;
 
-    // 当前设备的应用列表
-    std::vector<AppInfo> currentAppList;
+    //单设备应用列表
+    std::vector<AppInfo> m_currentAppList;
+
+    //用于跟踪异步执行的进程
+    QMap<QString, QProcess*> m_runningProcess;
 };

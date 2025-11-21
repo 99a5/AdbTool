@@ -43,10 +43,10 @@ void AdbTool::initData()
 
     logView = new QTextEdit(this);
     logView->setReadOnly(true);
-   // apkRow = new QHBoxLayout();
-   // leApkPath = new QLineEdit(this);
+    apkRow = new QHBoxLayout();
+    leApkPath = new QLineEdit(this);
 
-   /* leApkPath->setPlaceholderText(QStringLiteral("拖入 APK 或点击选择..."));
+    leApkPath->setPlaceholderText(QStringLiteral("拖入 APK 或点击选择..."));
     btnBrowseApk = new QPushButton(QStringLiteral("选择 APK"));
     btnInstall = new QPushButton(QStringLiteral("安装 APK"));
     lePackageName = new QLineEdit(this);
@@ -73,7 +73,7 @@ void AdbTool::initData()
     axisY = new QValueAxis;
 
 
-    progressBar = new QProgressBar(this);*/
+    progressBar = new QProgressBar(this);
 }
 
 void AdbTool::initUI()
@@ -158,48 +158,48 @@ void AdbTool::initUI()
     adbLay->addWidget(deviceTable);
 
 
-    //// ========= APK 安装区域 =========
-    //QGroupBox* apkGroup = new QGroupBox(QStringLiteral("APK 安装与启动"), this);
-    //QGridLayout* apkLay = new QGridLayout(apkGroup);
+    // ========= APK 安装区域 =========
+    QGroupBox* apkGroup = new QGroupBox(QStringLiteral("APK 安装与启动"), this);
+    QGridLayout* apkLay = new QGridLayout(apkGroup);
 
-    //apkLay->addWidget(new QLabel(QStringLiteral("APK 文件:")), 0, 0);
-    //apkLay->addWidget(leApkPath, 0, 1);
-    //apkLay->addWidget(btnBrowseApk, 0, 2);
-    //apkLay->addWidget(btnInstall, 0, 3);
+    apkLay->addWidget(new QLabel(QStringLiteral("APK 文件:")), 0, 0);
+    apkLay->addWidget(leApkPath, 0, 1);
+    apkLay->addWidget(btnBrowseApk, 0, 2);
+    apkLay->addWidget(btnInstall, 0, 3);
 
-    //apkLay->addWidget(new QLabel(QStringLiteral("Package/Main:")), 1, 0);
-    //apkLay->addWidget(lePackageName, 1, 1, 1, 2);
-    //apkLay->addWidget(btnStartApp, 1, 3);
+    apkLay->addWidget(new QLabel(QStringLiteral("Package/Main:")), 1, 0);
+    apkLay->addWidget(lePackageName, 1, 1, 1, 2);
+    apkLay->addWidget(btnStartApp, 1, 3);
 
-    //// ========= Push / Pull 区 =========
-    //QGroupBox* fileGroup = new QGroupBox(QStringLiteral("文件交互 Push / Pull"), this);
-    //QHBoxLayout* fileLay = new QHBoxLayout(fileGroup);
-    //fileLay->addWidget(btnPush);
-    //fileLay->addWidget(btnPull);
+    // ========= Push / Pull 区 =========
+    QGroupBox* fileGroup = new QGroupBox(QStringLiteral("文件交互 Push / Pull"), this);
+    QHBoxLayout* fileLay = new QHBoxLayout(fileGroup);
+    fileLay->addWidget(btnPush);
+    fileLay->addWidget(btnPull);
 
-    //// ========= 日志导出 =========
-    //QGroupBox* logGroup = new QGroupBox(QStringLiteral("日志导出"), this);
-    //QHBoxLayout* logLay = new QHBoxLayout(logGroup);
-    //logLay->addWidget(btnExportLog);
+    // ========= 日志导出 =========
+    QGroupBox* logGroup = new QGroupBox(QStringLiteral("日志导出"), this);
+    QHBoxLayout* logLay = new QHBoxLayout(logGroup);
+    logLay->addWidget(btnExportLog);
 
-    //// ========= CPU 监控区 =========
-    //QGroupBox* cpuGroup = new QGroupBox(QStringLiteral("CPU 监控"), this);
-    //QVBoxLayout* cpuLay = new QVBoxLayout(cpuGroup);
+    // ========= CPU 监控区 =========
+    QGroupBox* cpuGroup = new QGroupBox(QStringLiteral("CPU 监控"), this);
+    QVBoxLayout* cpuLay = new QVBoxLayout(cpuGroup);
 
-    //QHBoxLayout* cpuCtrl = new QHBoxLayout();
-    //cpuCtrl->addWidget(new QLabel(QStringLiteral("进程:")));
-    //cbMonitorProcess->setEditable(true);
-    //cbMonitorProcess->setPlaceholderText("输入进程名或 pid");
-    //cpuCtrl->addWidget(cbMonitorProcess);
-    //cpuCtrl->addWidget(btnStartMon);
-    //cpuCtrl->addWidget(btnStopMon);
+    QHBoxLayout* cpuCtrl = new QHBoxLayout();
+    cpuCtrl->addWidget(new QLabel(QStringLiteral("进程:")));
+    cbMonitorProcess->setEditable(true);
+    cbMonitorProcess->setPlaceholderText("输入进程名或 pid");
+    cpuCtrl->addWidget(cbMonitorProcess);
+    cpuCtrl->addWidget(btnStartMon);
+    cpuCtrl->addWidget(btnStopMon);
 
-    //cpuLay->addLayout(cpuCtrl);
+    cpuLay->addLayout(cpuCtrl);
 
-    //// 将图表放到 ChartView 中
-    //chartView = new QtCharts::QChartView(chart);
-    //chartView->setRenderHint(QPainter::Antialiasing);
-    //cpuLay->addWidget(chartView);
+    // 将图表放到 ChartView 中
+    chartView = new QtCharts::QChartView(chart);
+    chartView->setRenderHint(QPainter::Antialiasing);
+    cpuLay->addWidget(chartView);
 
     // ========= 日志文本输出 =========
     QGroupBox* outGroup = new QGroupBox(QStringLiteral("输出日志"));
@@ -209,10 +209,10 @@ void AdbTool::initUI()
 
     // 将所有分组加入主布局
     lay->addWidget(adbGroup);
-    //lay->addWidget(apkGroup);
-    //lay->addWidget(fileGroup);
-    //lay->addWidget(logGroup);
-    //lay->addWidget(cpuGroup);
+    lay->addWidget(apkGroup);
+    lay->addWidget(fileGroup);
+    lay->addWidget(logGroup);
+    lay->addWidget(cpuGroup);
     lay->addWidget(outGroup);
 
     setCentralWidget(central);
