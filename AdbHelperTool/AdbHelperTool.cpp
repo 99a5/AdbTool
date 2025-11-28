@@ -96,7 +96,6 @@ QString AdbHelperTool::runAdb(const QString& serial, const QString& cmd)
     return stdoutText;
 }
 
-
 QString AdbHelperTool::runAdbRaw(const QStringList& args)
 {
     QString adbExe = m_adbPath.isEmpty() ? "adb" : m_adbPath;
@@ -126,12 +125,7 @@ QString AdbHelperTool::runAdbRaw(const QStringList& args)
     return stdoutText;
 }
 
-
-
-void AdbHelperTool::runAdbAsync(
-    const DeviceInfo& dev,
-    const QStringList& args,
-    const QString& runningText)
+void AdbHelperTool::runAdbAsync(const DeviceInfo& dev,const QStringList& args,const QString& runningText)
 {
     QString adbExe = m_adbPath.isEmpty() ? "adb" : m_adbPath;
 
@@ -222,7 +216,6 @@ void AdbHelperTool::connectSlots()
     ui.dragAreaEdit->setAcceptDrops(true);
     ui.dragAreaEdit->installEventFilter(this);
 }
-
 
 std::vector<DeviceInfo> AdbHelperTool::getCheckedDevices()
 {
@@ -653,7 +646,8 @@ void AdbHelperTool::onForceStopSingle()
     runAdb("shell am force-stop " + pkg, serial);
 }
 
-/********************************** 命令工具页面 *********************************/
+/********************************** 工具页面 *********************************/
+
 void AdbHelperTool::onRunCustomCommand()
 {
     if (!ui.commandEdit) return; // 假设命令输入框叫 commandEdit
