@@ -15,8 +15,8 @@ void DeviceItemWidget::setDeviceInfo(const DeviceInfo deviceInfo)
 	m_deviceInfo = deviceInfo;
 
 	ui.label_3->setText(deviceInfo.name);
-	ui.label_7->setText(deviceInfo.system);
-	ui.label_5->setText(deviceInfo.serial);
+	ui.label_5->setText(deviceInfo.system);
+	ui.label_7->setText(deviceInfo.serial);
 }
 
 void DeviceItemWidget::slotCheckStateChanged(int state)

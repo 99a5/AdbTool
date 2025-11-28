@@ -23,7 +23,7 @@
        </font>
       </property>
       <property name="currentIndex">
-       <number>4</number>
+       <number>3</number>
       </property>
       <widget class="QWidget" name="deviceManagementPage">
        <attribute name="title">
@@ -743,7 +743,7 @@
       </widget>
       <widget class="QWidget" name="commandToolPage">
        <attribute name="title">
-        <string>命令工具</string>
+        <string>其他</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_11">
         <item>
@@ -800,6 +800,13 @@
            </widget>
           </item>
           <item>
+           <widget class="QPushButton" name="logExportBth">
+            <property name="text">
+             <string>日志导出</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <spacer name="verticalSpacer_3">
             <property name="orientation">
              <enum>Qt::Vertical</enum>
@@ -813,33 +820,6 @@
            </spacer>
           </item>
          </layout>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="logPage">
-       <attribute name="title">
-        <string>日志</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_2">
-        <item>
-         <widget class="QPushButton" name="logExportBth">
-          <property name="text">
-           <string>日志导出</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <spacer name="verticalSpacer_4">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
-          </property>
-         </spacer>
         </item>
        </layout>
       </widget>

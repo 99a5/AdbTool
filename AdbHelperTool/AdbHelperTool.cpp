@@ -30,9 +30,9 @@ AdbHelperTool::AdbHelperTool(QWidget* parent)
     // 如果你希望启动时读取真实设备，可以取消下面测试数据
     // --- 测试数据（可删除） ---
     vecDeviceInfos.clear();
-    DeviceInfo deviceInfo{ QStringLiteral("设备1"), "1234567890", QStringLiteral("Android 10") };
-    DeviceInfo deviceInfo2{ QStringLiteral("设备2"), "12345678901", QStringLiteral("Android 10") };
-    DeviceInfo deviceInfo3{ QStringLiteral("设备3"), "12345678902", QStringLiteral("Android 10") };
+    DeviceInfo deviceInfo{ QStringLiteral("设备1"), QStringLiteral("Android 10"), "1234567890" };
+    DeviceInfo deviceInfo2{ QStringLiteral("设备2"),  QStringLiteral("Android 10"), "12345678901" };
+    DeviceInfo deviceInfo3{ QStringLiteral("设备3"),  QStringLiteral("Android 10") , "12345678902" };
     vecDeviceInfos.push_back(deviceInfo);
     vecDeviceInfos.push_back(deviceInfo2);
     vecDeviceInfos.push_back(deviceInfo3);
@@ -701,77 +701,132 @@ void AdbHelperTool::onRunCustomCommand()
 
 void AdbHelperTool::onStartTerminal()
 {
-#ifdef Q_OS_WIN
-    QString cmdPath = QStandardPaths::findExecutable("cmd.exe");
-    if (cmdPath.isEmpty()) {
-        appendLog(QStringLiteral("无法找到 cmd.exe"));
+    // 1. 获取当前选择的设备序列号（你原 Python 里的 pid）
+    QString serial;
+    QString text;
+    if (ui.deviceSwitchBox->currentIndex() >= 0) {
+        serial = ui.deviceSwitchBox->currentData().toString(); // 获取选中设备
+        text = ui.commandEdit->toPlainText().trimmed();
+    }
+
+
+    if (serial.isEmpty()) {
+        appendLog("请先选择设备");
         return;
     }
 
-    // 指定工作目录，让终端能正常弹出
-    QString workDir = QDir::currentPath();
-
-    bool ok = QProcess::startDetached(cmdPath,  { "/K" }, workDir);
-    if (!ok) {
-        appendLog(QStringLiteral("启动终端失败"));
+    // 2. 查找 adb.exe
+    QString adbPath = QStandardPaths::findExecutable("adb");
+    if (adbPath.isEmpty()) {
+        appendLog("无法找到 adb，请确认已配置到 PATH");
+        return;
     }
 
-#elif defined(Q_OS_MAC)
-    QProcess::startDetached("open", QStringList() << "-a" << "Terminal");
+    // 3. 查找 cmd.exe
+    QString cmdPath = QStandardPaths::findExecutable("cmd.exe");
+    if (cmdPath.isEmpty()) {
+        appendLog("无法找到 cmd.exe");
+        return;
+    }
 
-#elif defined(Q_OS_LINUX)
-    // 多个 Linux 发行版支持的默认终端
-    QString term = QStandardPaths::findExecutable("x-terminal-emulator");
-    if (term.isEmpty())
-        term = QStandardPaths::findExecutable("gnome-terminal");
-    if (term.isEmpty())
-        term = QStandardPaths::findExecutable("konsole");
+    // 4. 构造命令：进入 adb shell
+    // 等价于 Python:  start adb -s <pid> shell
+    //QString command = QString("%1 -s %2 shell").arg(adbPath, serial);
+    QStringList args;
+    args << "/C" << "start";
+    //args << "/K" << command;   // /K 保持 cmd 打开并执行命令
 
-    if (!term.isEmpty())
-        QProcess::startDetached(term, {});
-    else
-        appendLog("未找到可用终端");
-
-#else
-    QMessageBox::warning(this, tr("错误"), tr("不支持的平台"));
-#endif
+    // 5. 启动终端
+    bool ok = QProcess::startDetached(cmdPath, args);
+    if (!ok) {
+        appendLog("启动 adb 终端失败");
+    }
 }
 
 void AdbHelperTool::onLogExport()
 {
-    // 选择文件保存路径
+    // 1. 获取设备 serial
+    QString serial;
+    QString pname;
+    if (ui.deviceSwitchBox->currentIndex() >= 0) {
+        serial = ui.deviceSwitchBox->currentData().toString();
+        pname = ui.deviceSwitchBox->currentText();
+    }
+
+    if (serial.isEmpty()) {
+        QMessageBox::warning(this, QStringLiteral("提示"), QStringLiteral("请先选择设备！"));
+        return;
+    }
+
+    // 2. 保存路径选择
+    QString nowtime = QDateTime::currentDateTime().toString("yyyyMMddHH");
+    QString defaultName = pname + QStringLiteral("_log_") + nowtime + QStringLiteral(".log");
+
     QString fileName = QFileDialog::getSaveFileName(
         this,
-        QStringLiteral("导出日志"),
-        QStandardPaths::writableLocation(QStandardPaths::DesktopLocation) + QStringLiteral("/adb_log.txt"),
-        QStringLiteral("文本文件 (*.txt)")
+        QStringLiteral("保存日志到文件"),
+        QStandardPaths::writableLocation(QStandardPaths::DesktopLocation) + "/" + defaultName,
+        QStringLiteral("日志文件 (*.log)")
     );
 
     if (fileName.isEmpty())
         return;
 
-    // 获取日志文本
-    QString logText;
-    if (ui.logView) {
-        logText = ui.logView->toPlainText();
-    }
-    else {
-        QMessageBox::warning(this, QStringLiteral("错误"), QStringLiteral("日志控件未初始化"));
+    // 3. 查找 adb
+    QString adbPath = QStandardPaths::findExecutable("adb");
+    if (adbPath.isEmpty()) {
+        QMessageBox::warning(this, QStringLiteral("提示"), QStringLiteral("找不到 adb，请确认已配置 PATH"));
         return;
     }
 
-    // 写入文件
-    QFile file(fileName);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QMessageBox::warning(this, QStringLiteral("错误"), QStringLiteral("无法打开文件进行写入"));
+    // 4. 查找 cmd.exe
+    QString cmdPath = QStandardPaths::findExecutable("cmd.exe");
+    if (cmdPath.isEmpty()) {
+        QMessageBox::warning(this, QStringLiteral("提示"), QStringLiteral("找不到 cmd.exe"));
         return;
     }
 
-    QTextStream out(&file);
-    out.setCodec("UTF-8");
-    out << logText;
-    file.close();
+    // 5. 启动实时查看窗口（等价 Python 的 cmd1）
+    QString viewCmd = QStringLiteral("start \"%1\" -s %2 logcat -v time -s \"tencent\"")
+        .arg(adbPath, serial);
 
-    QMessageBox::information(this, QStringLiteral("成功"),
-        QStringLiteral("日志已成功导出至:\n%1").arg(fileName));
+    QProcess::startDetached(cmdPath, { QStringLiteral("/C"), viewCmd });
+
+    // 6. 后台写文件（等价 Python 的 cmd2）
+    QStringList args;
+    args << "-s" << serial
+        << "logcat" << "-v" << "time"
+        << "-s" << "tencent";
+
+    QProcess* logProcess = new QProcess(this);
+
+    QFile* file = new QFile(fileName, logProcess);
+    if (!file->open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QMessageBox::warning(this, QStringLiteral("错误"), QStringLiteral("无法打开文件写入日志！"));
+        return;
+    }
+
+    connect(logProcess, &QProcess::readyReadStandardOutput, this, [=]() {
+        file->write(logProcess->readAllStandardOutput());
+        file->flush();
+        });
+
+    connect(logProcess, &QProcess::readyReadStandardError, this, [=]() {
+        file->write(logProcess->readAllStandardError());
+        file->flush();
+        });
+
+    logProcess->start(adbPath, args);
+
+    if (!logProcess->waitForStarted(2000)) {
+        QMessageBox::warning(this, QStringLiteral("错误"), QStringLiteral("logcat 启动失败！"));
+        return;
+    }
+
+    QMessageBox::information(
+        this,
+        QStringLiteral("成功"),
+        QStringLiteral("日志开始抓取并保存到文件：\n%1\n\n关闭程序后自动停止抓取。").arg(fileName)
+    );
 }
+
